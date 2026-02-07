@@ -5,6 +5,7 @@ import { ReorderPanel } from "@/components/ReorderPanel";
 import { UsageChart } from "@/components/UsageChart";
 import { ReorderTrend } from "@/components/ReorderTrend";
 import { ChainSelector, chains } from "@/components/ChainSelector";
+import { EmailIntegration } from "@/components/EmailIntegration";
 import { inventoryData, categories } from "@/lib/inventory-data";
 import { cn } from "@/lib/utils";
 
@@ -92,6 +93,8 @@ const Index = () => {
                 <ReorderPanel items={chainFilteredItems} />
               </div>
             </div>
+            
+            <EmailIntegration />
           </div>
         </div>
       </main>
