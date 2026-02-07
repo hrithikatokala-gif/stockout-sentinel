@@ -6,7 +6,7 @@
 
 ## PURPOSE
 
-<img width="70" height="72" alt="image" src="https://github.com/user-attachments/assets/17370f4b-d1e3-4355-9258-2fbaebc337b4" />
+<img width="140" height="144" alt="image" src="https://github.com/user-attachments/assets/17370f4b-d1e3-4355-9258-2fbaebc337b4" />
 
 Large scale resturants require many moving parts to keep operations running smoothly. A large aspect of that involves supply chain relationships, and inventory management. And while they seem interconnected they, being able to function together often can prove to be challenging. We aspire to create a website that allows large scale resturant operators (managaers, franchisees, etc.) be front and center in their inventory management and be involved in the supply chain. Our website ###### creates a user-friendly space for operators to keep track of inventory, make data-driven decisions based on historical ordering data, and connect directly with suppliers to order and communicate their needs. 
 
