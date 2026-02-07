@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { CartSheet } from "@/components/CartSheet";
 
 interface AppHeaderProps {
   children?: React.ReactNode;
@@ -53,8 +54,9 @@ export const AppHeader = ({ children }: AppHeaderProps) => {
           </nav>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {children}
+          <CartSheet />
           {user && (
             <div className="flex items-center gap-3">
               <span className="text-sm text-muted-foreground hidden sm:inline">
