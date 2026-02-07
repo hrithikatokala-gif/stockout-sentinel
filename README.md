@@ -20,5 +20,12 @@ Through our website, operators are able to view their historical data on the das
 
 This project is built with:
 
-- Lovable.ai
+- Lovable.dev
 
+## Problems that your team ran into and how your team overcame them
+
+One obstacle we ran into was finding a way to design a system to scale for large restaurant chains rather than a single location. We needed a way to structure our data models in a way where it wouldn't be too overwhelming. We solved this by organizing the system so managers can see overall one chain inventory first and look at individual locations only when needed by inputing specific chain IDs. This way, the platform stays easy to use and doesn’t overwhelm users, even for large restaurant chains.
+
+## Credit
+
+Lovable.dev
