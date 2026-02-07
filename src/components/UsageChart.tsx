@@ -1,54 +1,93 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell,
+} from "recharts";
 import { useState, useMemo } from "react";
-import { cn } from "@/lib/utils";
-import { inventoryData, MonthlyUsage } from "@/lib/inventory-data";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { inventoryData } from "@/lib/inventory-data";
 
-const viewOptions = ["Total", "Protein", "Produce", "Dairy", "Pantry", "Pasta"] as const;
-const months = ["Sep", "Oct", "Nov", "Dec", "Jan", "Feb"];
-
-// Seed-based pseudo-random to get consistent per-chain data
-function seededVariation(base: number, seed: number): number {
-  const factor = 0.75 + ((Math.sin(seed * 9301 + 49297) % 1 + 1) % 1) * 0.5;
-  return Math.round(base * factor);
-}
-
-const chainSeeds: Record<string, number> = {
-  "CH-001": 1,
-  "CH-002": 2,
-  "CH-003": 3,
-  "CH-004": 4,
+const CATEGORIES = ["Protein", "Produce", "Dairy", "Pantry", "Pasta"] as const;
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const CATEGORY_COLORS: Record<string, string> = {
+  Protein: "hsl(var(--primary))",
+  Produce: "hsl(142 71% 45%)",
+  Dairy: "hsl(47 100% 50%)",
+  Pantry: "hsl(25 95% 53%)",
+  Pasta: "hsl(262 83% 58%)",
 };
 
-const baseCategoryUsage: Record<string, { usage: number[]; cost: number[] }> = {
-  Protein: { usage: [850, 920, 880, 940, 900, 870], cost: [14500, 15800, 15100, 16200, 15500, 14900] },
-  Produce: { usage: [320, 350, 310, 380, 340, 330], cost: [1600, 1750, 1550, 1900, 1700, 1650] },
-  Dairy: { usage: [280, 310, 290, 340, 320, 300], cost: [3920, 4340, 4060, 4760, 4480, 4200] },
-  Pantry: { usage: [220, 250, 260, 300, 280, 240], cost: [1320, 1500, 1560, 1800, 1680, 1440] },
-  Pasta: { usage: [380, 420, 400, 460, 430, 390], cost: [1520, 1680, 1600, 1840, 1720, 1560] },
-};
+// Current date: Feb 2026
+const CURRENT_MONTH = 1; // 0-indexed, Feb = 1
+const CURRENT_YEAR = 2026;
 
-function getChainCategoryData(chainId: string, category: string): MonthlyUsage[] {
-  const seed = chainSeeds[chainId] ?? 1;
-  const base = baseCategoryUsage[category];
-  if (!base) return [];
-  return months.map((m, i) => ({
-    month: m,
-    usage: seededVariation(base.usage[i], seed + i),
-    cost: seededVariation(base.cost[i], seed + i + 100),
-  }));
+// Deterministic pseudo-random from seed
+function seeded(seed: number): number {
+  return ((Math.sin(seed * 9301 + 49297) % 1) + 1) % 1;
 }
 
-function getChainTotalData(chainId: string): MonthlyUsage[] {
-  const categories = Object.keys(baseCategoryUsage);
-  return months.map((m, i) => {
-    let usage = 0, cost = 0;
-    for (const cat of categories) {
-      const data = getChainCategoryData(chainId, cat);
-      usage += data[i].usage;
-      cost += data[i].cost;
-    }
-    return { month: m, usage, cost };
+interface IngredientDetail {
+  name: string;
+  usage: number;
+  cost: number;
+  unit: string;
+}
+
+interface CategoryBar {
+  category: string;
+  usage: number;
+  cost: number;
+  ingredients: IngredientDetail[];
+}
+
+function getMonthData(chainId: string, monthIndex: number): CategoryBar[] {
+  const chainItems = inventoryData.filter(i => i.chainId === chainId);
+  const isHistorical = monthIndex > CURRENT_MONTH;
+  const yearLabel = isHistorical ? CURRENT_YEAR - 1 : CURRENT_YEAR;
+  const baseSeed = monthIndex * 31 + (yearLabel % 100);
+
+  return CATEGORIES.map((cat) => {
+    const items = chainItems.filter(i => i.category === cat);
+    const ingredients: IngredientDetail[] = items.map((item, idx) => {
+      const seed = baseSeed + idx * 7 + item.name.length;
+      const variation = 0.6 + seeded(seed) * 0.8;
+      // Scale daily usage to monthly (~30 days) with variation
+      const monthlyUsage = Math.round(item.dailyUsage * 30 * variation);
+      const monthlyCost = Math.round(monthlyUsage * item.pricePerUnit * 100) / 100;
+      return { name: item.name, usage: monthlyUsage, cost: monthlyCost, unit: item.unit };
+    });
+
+    const totalUsage = ingredients.reduce((s, i) => s + i.usage, 0);
+    const totalCost = ingredients.reduce((s, i) => s + i.cost, 0);
+
+    return { category: cat, usage: totalUsage, cost: Math.round(totalCost), ingredients };
   });
+}
+
+function CustomTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null;
+  const data = payload[0]?.payload as CategoryBar;
+  if (!data) return null;
+
+  return (
+    <div className="rounded-lg border bg-card p-3 shadow-lg text-xs max-w-[260px]">
+      <p className="font-semibold text-sm mb-1.5" style={{ color: CATEGORY_COLORS[data.category] }}>
+        {data.category}
+      </p>
+      <div className="space-y-1 mb-2">
+        {data.ingredients.map((ing) => (
+          <div key={ing.name} className="flex justify-between gap-3">
+            <span className="text-muted-foreground truncate">{ing.name}</span>
+            <span className="tabular-nums whitespace-nowrap">
+              {ing.usage} {ing.unit} · ${ing.cost.toLocaleString()}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="border-t pt-1.5 flex justify-between font-medium">
+        <span>Total</span>
+        <span className="tabular-nums">{data.usage} units · ${data.cost.toLocaleString()}</span>
+      </div>
+    </div>
+  );
 }
 
 interface UsageChartProps {
@@ -56,60 +95,66 @@ interface UsageChartProps {
 }
 
 export function UsageChart({ chainId }: UsageChartProps) {
-  const [view, setView] = useState<string>("Total");
+  // Default to current month
+  const [activeMonth, setActiveMonth] = useState(MONTHS[CURRENT_MONTH]);
 
-  const data = useMemo(() => {
-    return view === "Total" ? getChainTotalData(chainId) : getChainCategoryData(chainId, view);
-  }, [view, chainId]);
+  const monthIndex = MONTHS.indexOf(activeMonth);
+  const isHistorical = monthIndex > CURRENT_MONTH;
+  const yearLabel = isHistorical ? CURRENT_YEAR - 1 : CURRENT_YEAR;
+
+  const data = useMemo(() => getMonthData(chainId, monthIndex), [chainId, monthIndex]);
 
   return (
     <div className="rounded-lg border bg-card p-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-1">
         <div>
           <h2 className="text-base font-semibold">Monthly Stock Usage & Cost</h2>
-          <p className="text-xs text-muted-foreground">6-month rolling history</p>
+          <p className="text-xs text-muted-foreground">
+            {activeMonth} {yearLabel} — by ingredient category
+            {isHistorical && <span className="ml-1 text-amber-500">(prior year)</span>}
+          </p>
         </div>
-        <div className="flex gap-1.5">
-          {viewOptions.map(v => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-xs font-medium transition-all",
-                view === v
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
+      </div>
+
+      <Tabs value={activeMonth} onValueChange={setActiveMonth}>
+        <TabsList className="w-full flex-wrap h-auto gap-0.5 bg-muted/50 p-1">
+          {MONTHS.map((m, i) => (
+            <TabsTrigger
+              key={m}
+              value={m}
+              className="text-xs px-2 py-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
             >
-              {v}
-            </button>
+              {m}
+              {i > CURRENT_MONTH && (
+                <span className="ml-0.5 text-[9px] opacity-60">'{String(CURRENT_YEAR - 1).slice(-2)}</span>
+              )}
+            </TabsTrigger>
           ))}
-        </div>
-      </div>
-      <div className="mt-4 h-[280px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="month" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-            <YAxis yAxisId="left" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-            <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "hsl(var(--card))",
-                border: "1px solid hsl(var(--border))",
-                borderRadius: "8px",
-                fontSize: "12px",
-              }}
-              formatter={(value: number, name: string) =>
-                name === "cost" ? [`$${value.toLocaleString()}`, "Cost"] : [`${value} units`, "Usage"]
-              }
-            />
-            <Legend wrapperStyle={{ fontSize: "12px" }} />
-            <Bar yAxisId="left" dataKey="usage" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Usage" />
-            <Bar yAxisId="right" dataKey="cost" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} name="Cost ($)" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+        </TabsList>
+
+        {MONTHS.map((m) => (
+          <TabsContent key={m} value={m} className="mt-3">
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="category" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
+                  <YAxis yAxisId="left" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} label={{ value: "Units", angle: -90, position: "insideLeft", style: { fontSize: 11, fill: "hsl(var(--muted-foreground))" } }} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} label={{ value: "Cost", angle: 90, position: "insideRight", style: { fontSize: 11, fill: "hsl(var(--muted-foreground))" } }} />
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted) / 0.3)" }} />
+                  <Legend wrapperStyle={{ fontSize: "12px" }} />
+                  <Bar yAxisId="left" dataKey="usage" name="Usage (units)" radius={[4, 4, 0, 0]}>
+                    {data.map((entry) => (
+                      <Cell key={entry.category} fill={CATEGORY_COLORS[entry.category]} />
+                    ))}
+                  </Bar>
+                  <Bar yAxisId="right" dataKey="cost" name="Cost ($)" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} fillOpacity={0.5} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </TabsContent>
+        ))}
+      </Tabs>
     </div>
   );
 }
