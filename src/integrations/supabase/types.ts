@@ -14,35 +14,67 @@ export type Database = {
   }
   public: {
     Tables: {
-      profiles: {
+      company_users: {
         Row: {
-          avatar_url: string | null
+          company_id: string
           created_at: string
           full_name: string | null
           id: string
+          password_hash: string
           restaurant_chain: string | null
           updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          password_hash: string
+          restaurant_chain?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          password_hash?: string
+          restaurant_chain?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          token: string
           user_id: string
         }
         Insert: {
-          avatar_url?: string | null
           created_at?: string
-          full_name?: string | null
+          expires_at: string
           id?: string
-          restaurant_chain?: string | null
-          updated_at?: string
+          token: string
           user_id: string
         }
         Update: {
-          avatar_url?: string | null
           created_at?: string
-          full_name?: string | null
+          expires_at?: string
           id?: string
-          restaurant_chain?: string | null
-          updated_at?: string
+          token?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "company_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
