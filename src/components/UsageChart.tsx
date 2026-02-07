@@ -148,7 +148,7 @@ export function UsageChart({ chainId }: UsageChartProps) {
                       <Cell key={entry.category} fill={CATEGORY_COLORS[entry.category]} />
                     ))}
                   </Bar>
-                  <Bar yAxisId="right" dataKey="cost" name="Cost ($)" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} fillOpacity={0.5} />
+                  <Bar yAxisId="right" dataKey="cost" name="Cost ($)" fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} fillOpacity={0.7} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
