@@ -58,7 +58,7 @@ export const AppHeader = ({ children }: AppHeaderProps) => {
           {user && (
             <div className="flex items-center gap-3">
               <span className="text-sm text-muted-foreground hidden sm:inline">
-                {user.email}
+                {user.company_id}
               </span>
               <Button variant="ghost" size="icon" onClick={signOut} title="Sign out">
                 <LogOut className="h-4 w-4" />

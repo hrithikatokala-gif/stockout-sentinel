@@ -1,47 +1,115 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+
+interface User {
+  id: string;
+  company_id: string;
+  full_name: string | null;
+}
 
 interface AuthContextType {
   user: User | null;
-  session: Session | null;
   loading: boolean;
+  signIn: (companyId: string, password: string) => Promise<{ error?: string }>;
+  signUp: (companyId: string, password: string, fullName?: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const TOKEN_KEY = "restoq_auth_token";
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    // Check for existing session on mount
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) {
+      validateToken(token);
+    } else {
       setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    }
   }, []);
 
+  const validateToken = async (token: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("auth", {
+        body: { action: "validate", token },
+      });
+
+      if (error || data?.error) {
+        localStorage.removeItem(TOKEN_KEY);
+        setUser(null);
+      } else {
+        setUser(data.user);
+      }
+    } catch {
+      localStorage.removeItem(TOKEN_KEY);
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signIn = async (companyId: string, password: string): Promise<{ error?: string }> => {
+    try {
+      const { data, error } = await supabase.functions.invoke("auth", {
+        body: { action: "signin", company_id: companyId, password },
+      });
+
+      if (error) {
+        return { error: "Failed to connect to server" };
+      }
+
+      if (data?.error) {
+        return { error: data.error };
+      }
+
+      localStorage.setItem(TOKEN_KEY, data.token);
+      setUser(data.user);
+      return {};
+    } catch {
+      return { error: "Failed to sign in" };
+    }
+  };
+
+  const signUp = async (companyId: string, password: string, fullName?: string): Promise<{ error?: string }> => {
+    try {
+      const { data, error } = await supabase.functions.invoke("auth", {
+        body: { action: "signup", company_id: companyId, password, full_name: fullName },
+      });
+
+      if (error) {
+        return { error: "Failed to connect to server" };
+      }
+
+      if (data?.error) {
+        return { error: data.error };
+      }
+
+      localStorage.setItem(TOKEN_KEY, data.token);
+      setUser(data.user);
+      return {};
+    } catch {
+      return { error: "Failed to create account" };
+    }
+  };
+
   const signOut = async () => {
-    await supabase.auth.signOut();
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) {
+      await supabase.functions.invoke("auth", {
+        body: { action: "signout", token },
+      });
+    }
+    localStorage.removeItem(TOKEN_KEY);
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );

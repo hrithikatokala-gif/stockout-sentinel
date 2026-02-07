@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,18 +10,21 @@ import { useToast } from "@/hooks/use-toast";
 import { BarChart3, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 
-const emailSchema = z.string().email("Please enter a valid email address");
+const companyIdSchema = z.string()
+  .min(3, "Company ID must be at least 3 characters")
+  .max(50, "Company ID must be less than 50 characters")
+  .regex(/^[a-zA-Z0-9_-]+$/, "Company ID can only contain letters, numbers, dashes, and underscores");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
 
 export default function Auth() {
-  const [email, setEmail] = useState("");
+  const [companyId, setCompanyId] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ companyId?: string; password?: string }>({});
   
-  const { user } = useAuth();
+  const { user, signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -33,11 +35,11 @@ export default function Auth() {
   }, [user, navigate]);
 
   const validateInputs = () => {
-    const newErrors: { email?: string; password?: string } = {};
+    const newErrors: { companyId?: string; password?: string } = {};
     
-    const emailResult = emailSchema.safeParse(email);
-    if (!emailResult.success) {
-      newErrors.email = emailResult.error.errors[0].message;
+    const companyIdResult = companyIdSchema.safeParse(companyId);
+    if (!companyIdResult.success) {
+      newErrors.companyId = companyIdResult.error.errors[0].message;
     }
     
     const passwordResult = passwordSchema.safeParse(password);
@@ -56,18 +58,13 @@ export default function Auth() {
     
     setLoading(true);
     
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await signIn(companyId, password);
 
     if (error) {
       toast({
         variant: "destructive",
         title: "Sign in failed",
-        description: error.message === "Invalid login credentials" 
-          ? "Invalid email or password. Please try again."
-          : error.message,
+        description: error,
       });
     } else {
       toast({
@@ -86,37 +83,18 @@ export default function Auth() {
     
     setLoading(true);
     
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          full_name: fullName,
-        },
-      },
-    });
+    const { error } = await signUp(companyId, password, fullName || undefined);
 
     if (error) {
-      if (error.message.includes("already registered")) {
-        toast({
-          variant: "destructive",
-          title: "Account exists",
-          description: "This email is already registered. Please sign in instead.",
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Sign up failed",
-          description: error.message,
-        });
-      }
+      toast({
+        variant: "destructive",
+        title: "Sign up failed",
+        description: error,
+      });
     } else {
       toast({
-        title: "Check your email",
-        description: "We've sent you a confirmation link to verify your account.",
+        title: "Account created!",
+        description: "Welcome to restoq.",
       });
     }
     
@@ -138,7 +116,7 @@ export default function Auth() {
           </div>
           <CardTitle className="text-2xl">Welcome</CardTitle>
           <CardDescription>
-            Sign in to your account or create a new one
+            Sign in with your Company ID or create a new account
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -151,17 +129,17 @@ export default function Auth() {
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
+                  <Label htmlFor="signin-company-id">Company ID</Label>
                   <Input
-                    id="signin-email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="signin-company-id"
+                    type="text"
+                    placeholder="your-company-id"
+                    value={companyId}
+                    onChange={(e) => setCompanyId(e.target.value)}
                     required
                   />
-                  {errors.email && (
-                    <p className="text-sm text-destructive">{errors.email}</p>
+                  {errors.companyId && (
+                    <p className="text-sm text-destructive">{errors.companyId}</p>
                   )}
                 </div>
                 <div className="space-y-2">
@@ -212,18 +190,21 @@ export default function Auth() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
+                  <Label htmlFor="signup-company-id">Company ID</Label>
                   <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="signup-company-id"
+                    type="text"
+                    placeholder="your-company-id"
+                    value={companyId}
+                    onChange={(e) => setCompanyId(e.target.value)}
                     required
                   />
-                  {errors.email && (
-                    <p className="text-sm text-destructive">{errors.email}</p>
+                  {errors.companyId && (
+                    <p className="text-sm text-destructive">{errors.companyId}</p>
                   )}
+                  <p className="text-xs text-muted-foreground">
+                    Letters, numbers, dashes, and underscores only
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>
