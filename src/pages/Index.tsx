@@ -5,7 +5,6 @@ import { ReorderPanel } from "@/components/ReorderPanel";
 import { UsageChart } from "@/components/UsageChart";
 import { ReorderTrend } from "@/components/ReorderTrend";
 import { ChainSelector, chains } from "@/components/ChainSelector";
-import { EmailIntegration } from "@/components/EmailIntegration";
 import { AppHeader } from "@/components/AppHeader";
 import { inventoryData, categories, RiskLevel } from "@/lib/inventory-data";
 import { cn } from "@/lib/utils";
@@ -133,19 +132,15 @@ const Index = () => {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-4">
-            <div className="rounded-lg border bg-card p-5">
-              <h2 className="flex items-center gap-2 text-base font-semibold">
-                <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-                Urgent Reorders
-              </h2>
-              <p className="mt-1 text-xs text-muted-foreground">Orders that should be placed today</p>
-              <div className="mt-4">
-                <ReorderPanel items={chainFilteredItems} />
-              </div>
+          <div className="rounded-lg border bg-card p-5">
+            <h2 className="flex items-center gap-2 text-base font-semibold">
+              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+              Urgent Reorders
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">Orders that should be placed today</p>
+            <div className="mt-4">
+              <ReorderPanel items={chainFilteredItems} />
             </div>
-            
-            <EmailIntegration />
           </div>
         </div>
       </main>
