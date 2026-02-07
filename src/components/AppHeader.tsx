@@ -1,6 +1,8 @@
-import { BarChart3 } from "lucide-react";
+import { BarChart3, LogOut } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 
 interface AppHeaderProps {
   children?: React.ReactNode;
@@ -15,6 +17,8 @@ const navItems = [
 ];
 
 export const AppHeader = ({ children }: AppHeaderProps) => {
+  const { user, signOut } = useAuth();
+
   return (
     <header className="border-b bg-card">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
@@ -51,6 +55,16 @@ export const AppHeader = ({ children }: AppHeaderProps) => {
         
         <div className="flex items-center gap-4">
           {children}
+          {user && (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground hidden sm:inline">
+                {user.email}
+              </span>
+              <Button variant="ghost" size="icon" onClick={signOut} title="Sign out">
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </header>
