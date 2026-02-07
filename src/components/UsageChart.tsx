@@ -1,14 +1,66 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { monthlyUsageByCategory, totalMonthlyUsage } from "@/lib/inventory-data";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { inventoryData, MonthlyUsage } from "@/lib/inventory-data";
 
-const viewOptions = ["Total", "Protein", "Produce", "Dairy", "Pantry"] as const;
+const viewOptions = ["Total", "Protein", "Produce", "Dairy", "Pantry", "Pasta"] as const;
+const months = ["Sep", "Oct", "Nov", "Dec", "Jan", "Feb"];
 
-export function UsageChart() {
+// Seed-based pseudo-random to get consistent per-chain data
+function seededVariation(base: number, seed: number): number {
+  const factor = 0.75 + ((Math.sin(seed * 9301 + 49297) % 1 + 1) % 1) * 0.5;
+  return Math.round(base * factor);
+}
+
+const chainSeeds: Record<string, number> = {
+  "CH-001": 1,
+  "CH-002": 2,
+  "CH-003": 3,
+  "CH-004": 4,
+};
+
+const baseCategoryUsage: Record<string, { usage: number[]; cost: number[] }> = {
+  Protein: { usage: [850, 920, 880, 940, 900, 870], cost: [14500, 15800, 15100, 16200, 15500, 14900] },
+  Produce: { usage: [320, 350, 310, 380, 340, 330], cost: [1600, 1750, 1550, 1900, 1700, 1650] },
+  Dairy: { usage: [280, 310, 290, 340, 320, 300], cost: [3920, 4340, 4060, 4760, 4480, 4200] },
+  Pantry: { usage: [220, 250, 260, 300, 280, 240], cost: [1320, 1500, 1560, 1800, 1680, 1440] },
+  Pasta: { usage: [380, 420, 400, 460, 430, 390], cost: [1520, 1680, 1600, 1840, 1720, 1560] },
+};
+
+function getChainCategoryData(chainId: string, category: string): MonthlyUsage[] {
+  const seed = chainSeeds[chainId] ?? 1;
+  const base = baseCategoryUsage[category];
+  if (!base) return [];
+  return months.map((m, i) => ({
+    month: m,
+    usage: seededVariation(base.usage[i], seed + i),
+    cost: seededVariation(base.cost[i], seed + i + 100),
+  }));
+}
+
+function getChainTotalData(chainId: string): MonthlyUsage[] {
+  const categories = Object.keys(baseCategoryUsage);
+  return months.map((m, i) => {
+    let usage = 0, cost = 0;
+    for (const cat of categories) {
+      const data = getChainCategoryData(chainId, cat);
+      usage += data[i].usage;
+      cost += data[i].cost;
+    }
+    return { month: m, usage, cost };
+  });
+}
+
+interface UsageChartProps {
+  chainId: string;
+}
+
+export function UsageChart({ chainId }: UsageChartProps) {
   const [view, setView] = useState<string>("Total");
 
-  const data = view === "Total" ? totalMonthlyUsage : monthlyUsageByCategory[view] ?? [];
+  const data = useMemo(() => {
+    return view === "Total" ? getChainTotalData(chainId) : getChainCategoryData(chainId, view);
+  }, [view, chainId]);
 
   return (
     <div className="rounded-lg border bg-card p-5">

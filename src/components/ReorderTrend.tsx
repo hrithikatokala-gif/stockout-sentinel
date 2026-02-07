@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { inventoryData } from "@/lib/inventory-data";
 import { cn } from "@/lib/utils";
 import { Repeat, TrendingUp, TrendingDown, Minus } from "lucide-react";
@@ -11,23 +12,6 @@ interface ReorderTrendItem {
   avgCostPerOrder: number;
 }
 
-// Simulated reorder frequency data based on inventory characteristics
-const reorderTrends: ReorderTrendItem[] = inventoryData
-  .map(item => {
-    const ordersPerMonth = +(item.dailyUsage * 30 / item.suggestedOrderQty).toFixed(1);
-    const trend: "up" | "down" | "stable" =
-      item.risk === "critical" ? "up" : item.risk === "warning" ? "stable" : "down";
-    return {
-      name: item.name,
-      category: item.category,
-      supplier: item.supplier,
-      ordersPerMonth,
-      trend,
-      avgCostPerOrder: +(item.suggestedOrderQty * item.pricePerUnit).toFixed(0),
-    };
-  })
-  .sort((a, b) => b.ordersPerMonth - a.ordersPerMonth);
-
 const trendIcon = { up: TrendingUp, down: TrendingDown, stable: Minus };
 const trendColor = {
   up: "text-destructive",
@@ -36,7 +20,30 @@ const trendColor = {
 };
 const trendLabel = { up: "Increasing", down: "Decreasing", stable: "Stable" };
 
-export function ReorderTrend() {
+interface ReorderTrendProps {
+  chainId: string;
+}
+
+export function ReorderTrend({ chainId }: ReorderTrendProps) {
+  const reorderTrends = useMemo<ReorderTrendItem[]>(() => {
+    return inventoryData
+      .filter(item => item.chainId === chainId)
+      .map(item => {
+        const ordersPerMonth = +(item.dailyUsage * 30 / item.suggestedOrderQty).toFixed(1);
+        const trend: "up" | "down" | "stable" =
+          item.risk === "critical" ? "up" : item.risk === "warning" ? "stable" : "down";
+        return {
+          name: item.name,
+          category: item.category,
+          supplier: item.supplier,
+          ordersPerMonth,
+          trend,
+          avgCostPerOrder: +(item.suggestedOrderQty * item.pricePerUnit).toFixed(0),
+        };
+      })
+      .sort((a, b) => b.ordersPerMonth - a.ordersPerMonth);
+  }, [chainId]);
+
   return (
     <div className="rounded-lg border bg-card p-5">
       <div className="flex items-center gap-2">

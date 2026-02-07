@@ -66,8 +66,8 @@ const Index = () => {
       <main className="mx-auto max-w-7xl px-6 py-6 space-y-6">
         {/* Usage Charts */}
         <div className="grid gap-6 lg:grid-cols-2">
-          <UsageChart />
-          <ReorderTrend />
+          <UsageChart chainId={selectedChain} />
+          <ReorderTrend chainId={selectedChain} />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
