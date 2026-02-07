@@ -3,6 +3,7 @@ import { ShoppingCart, BarChart3 } from "lucide-react";
 import { StockoutTable } from "@/components/StockoutTable";
 import { ReorderPanel } from "@/components/ReorderPanel";
 import { UsageChart } from "@/components/UsageChart";
+import { ReorderTrend } from "@/components/ReorderTrend";
 import { inventoryData, categories } from "@/lib/inventory-data";
 import { cn } from "@/lib/utils";
 
@@ -36,7 +37,10 @@ const Index = () => {
 
       <main className="mx-auto max-w-7xl px-6 py-6 space-y-6">
         {/* Usage Charts */}
-        <UsageChart />
+        <div className="grid gap-6 lg:grid-cols-2">
+          <UsageChart />
+          <ReorderTrend />
+        </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           {/* Main Table */}
