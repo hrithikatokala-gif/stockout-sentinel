@@ -1,14 +1,13 @@
-# Welcome to your Lovable project
+# Welcome to our Inventory Management Website: 
 
 ## Project info
 
 **URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
 
-## How can I edit this code?
+## PURPOSE
+Large scale resturants require many moving parts to keep operations running smoothly. A large aspect of that involves supply chain relationships, and inventory management. And while they seem interconnected they, being able to function together often can prove to be challenging. We aspire to create a website that allows large scale resturant operators (managaers, franchisees, etc.) be front and center in their inventory management and be involved in the supply chain. Our website ###### creates a user-friendly space for operators to keep track of inventory, make data-driven decisions based on historical ordering data, and connect directly with suppliers to order and communicate their needs. 
 
-There are several ways of editing your application.
-
-**Use Lovable**
+Through our website operators are able to view their historical data on the dashboard and make informed descisions regarding order quantity, using this feature allows large scale restuants to activly attempt to reduce food waste. Operators will have acess to metrics such as: Category, Stock, Price/Unit, Daily Use,Days Left, Shelf Life ,Status and Recommended Order for each item that they stock, which can be filtered by restock urgency such as: Critical, Low Stock and Healthy. This feature 
 
 Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
 
