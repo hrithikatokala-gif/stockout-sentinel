@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import { hashSync, compareSync, genSaltSync } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,16 +16,24 @@ async function legacyHashPassword(password: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function hashPassword(password: string): Promise<string> {
-  return await bcrypt.hash(password);
+function hashPassword(password: string): string {
+  const salt = genSaltSync(10);
+  return hashSync(password, salt);
 }
 
-async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
+function verifyPassword(password: string, storedHash: string): boolean {
   // Check if it's a bcrypt hash (starts with $2)
   if (storedHash.startsWith("$2")) {
-    return await bcrypt.compare(password, storedHash);
+    return compareSync(password, storedHash);
   }
-  // Legacy SHA-256 hash migration path
+  // Legacy SHA-256 hash migration path — fall through to async check
+  return false;
+}
+
+async function verifyPasswordWithLegacy(password: string, storedHash: string): Promise<boolean> {
+  if (storedHash.startsWith("$2")) {
+    return compareSync(password, storedHash);
+  }
   const legacyHash = await legacyHashPassword(password);
   return legacyHash === storedHash;
 }
@@ -85,7 +93,7 @@ serve(async (req) => {
       }
 
       // Create user with bcrypt hash
-      const password_hash = await hashPassword(password);
+      const password_hash = hashPassword(password);
       const { data: user, error: createError } = await supabase
         .from("company_users")
         .insert({ company_id, password_hash, full_name })
@@ -136,14 +144,14 @@ serve(async (req) => {
 
       if (!user) {
         // Perform a dummy hash to prevent timing attacks
-        await hashPassword(password);
+        hashPassword(password);
         return new Response(
           JSON.stringify({ error: "Invalid Company ID or password" }),
           { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      const passwordValid = await verifyPassword(password, user.password_hash);
+      const passwordValid = await verifyPasswordWithLegacy(password, user.password_hash);
       if (!passwordValid) {
         return new Response(
           JSON.stringify({ error: "Invalid Company ID or password" }),
@@ -153,7 +161,7 @@ serve(async (req) => {
 
       // Migrate legacy hash to bcrypt on successful login
       if (!user.password_hash.startsWith("$2")) {
-        const newHash = await hashPassword(password);
+        const newHash = hashPassword(password);
         await supabase
           .from("company_users")
           .update({ password_hash: newHash })
