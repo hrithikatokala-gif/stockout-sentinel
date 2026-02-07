@@ -1,11 +1,7 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Building2 } from "lucide-react";
+import { useState } from "react";
+import { Building2, LogIn } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export interface Chain {
   id: string;
@@ -26,26 +22,52 @@ interface ChainSelectorProps {
 }
 
 export const ChainSelector = ({ selectedChain, onChainChange }: ChainSelectorProps) => {
+  const [chainInput, setChainInput] = useState("");
+  const [managerInput, setManagerInput] = useState("");
+  const [error, setError] = useState("");
   const currentChain = chains.find(c => c.id === selectedChain);
 
+  const handleAccess = () => {
+    setError("");
+    if (!chainInput.trim() || !managerInput.trim()) {
+      setError("Both fields required");
+      return;
+    }
+    const found = chains.find(c => c.id.toUpperCase() === chainInput.trim().toUpperCase());
+    if (!found) {
+      setError("Invalid Chain ID");
+      return;
+    }
+    onChainChange(found.id);
+    setChainInput("");
+    setManagerInput("");
+  };
+
   return (
-    <div className="flex items-center gap-2">
-      <Building2 className="h-4 w-4 text-muted-foreground" />
-      <Select value={selectedChain} onValueChange={onChainChange}>
-        <SelectTrigger className="w-[200px] h-9 text-sm">
-          <SelectValue placeholder="Select chain" />
-        </SelectTrigger>
-        <SelectContent>
-          {chains.map((chain) => (
-            <SelectItem key={chain.id} value={chain.id}>
-              <div className="flex flex-col items-start">
-                <span className="font-medium">{chain.name}</span>
-                <span className="text-xs text-muted-foreground">{chain.id}</span>
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+    <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1.5 text-sm">
+        <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="font-medium">{currentChain?.name}</span>
+        <span className="text-xs text-muted-foreground">({selectedChain})</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <Input
+          placeholder="Chain ID"
+          value={chainInput}
+          onChange={(e) => setChainInput(e.target.value)}
+          className="h-8 w-24 text-xs"
+        />
+        <Input
+          placeholder="Manager #"
+          value={managerInput}
+          onChange={(e) => setManagerInput(e.target.value)}
+          className="h-8 w-24 text-xs"
+        />
+        <Button size="sm" variant="outline" className="h-8 px-2.5" onClick={handleAccess}>
+          <LogIn className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+      {error && <span className="text-xs text-destructive">{error}</span>}
     </div>
   );
 };
