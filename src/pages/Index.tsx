@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { ShoppingCart, BarChart3, AlertTriangle, Clock, Package } from "lucide-react";
+import { ShoppingCart, AlertTriangle, Clock, Package } from "lucide-react";
 import { StockoutTable } from "@/components/StockoutTable";
 import { ReorderPanel } from "@/components/ReorderPanel";
 import { UsageChart } from "@/components/UsageChart";
 import { ReorderTrend } from "@/components/ReorderTrend";
 import { ChainSelector, chains } from "@/components/ChainSelector";
 import { EmailIntegration } from "@/components/EmailIntegration";
+import { AppHeader } from "@/components/AppHeader";
 import { inventoryData, categories, RiskLevel } from "@/lib/inventory-data";
 import { cn } from "@/lib/utils";
 
@@ -40,28 +41,15 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-primary p-2">
-              <BarChart3 className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold tracking-tight">StockPulse</h1>
-              <p className="text-xs text-muted-foreground">Inventory Intelligence</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <ChainSelector 
-              selectedChain={selectedChain} 
-              onChainChange={setSelectedChain} 
-            />
-            <p className="font-mono text-xs text-muted-foreground">
-              Updated just now
-            </p>
-          </div>
-        </div>
-      </header>
+      <AppHeader>
+        <ChainSelector 
+          selectedChain={selectedChain} 
+          onChainChange={setSelectedChain} 
+        />
+        <p className="font-mono text-xs text-muted-foreground">
+          Updated just now
+        </p>
+      </AppHeader>
 
       <main className="mx-auto max-w-7xl px-6 py-6 space-y-6">
         {/* Usage Charts */}
