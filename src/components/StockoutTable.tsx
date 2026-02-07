@@ -25,6 +25,7 @@ export function StockoutTable({ items }: StockoutTableProps) {
             <th className="pb-3 font-semibold text-muted-foreground">Price/Unit</th>
             <th className="pb-3 font-semibold text-muted-foreground">Daily Use</th>
             <th className="pb-3 font-semibold text-muted-foreground">Days Left</th>
+            <th className="pb-3 font-semibold text-muted-foreground">Shelf Life</th>
             <th className="pb-3 font-semibold text-muted-foreground">Status</th>
             <th className="pb-3 font-semibold text-muted-foreground">Reorder</th>
           </tr>
@@ -59,6 +60,16 @@ export function StockoutTable({ items }: StockoutTableProps) {
                     item.daysUntilStockout <= 4 && item.daysUntilStockout > 2 && "text-accent-foreground"
                   )}>
                     {item.daysUntilStockout}d
+                  </span>
+                </td>
+                <td className="py-3.5">
+                  <span className={cn(
+                    "font-mono text-sm",
+                    item.shelfLifeDays <= 3 && "text-destructive font-bold",
+                    item.shelfLifeDays <= 7 && item.shelfLifeDays > 3 && "text-accent-foreground font-semibold",
+                    item.shelfLifeDays > 7 && "text-muted-foreground"
+                  )}>
+                    {item.shelfLifeDays}d
                   </span>
                 </td>
                 <td className="py-3.5">
