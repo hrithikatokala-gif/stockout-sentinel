@@ -11,6 +11,7 @@ const navItems = [
   { to: "/suppliers", label: "Suppliers" },
   { to: "/messages", label: "Messages" },
   { to: "/emails", label: "Emails" },
+  { to: "/licenses", label: "Licenses" },
 ];
 
 export const AppHeader = ({ children }: AppHeaderProps) => {
