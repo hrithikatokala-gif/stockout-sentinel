@@ -1,18 +1,33 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Simple hash function for passwords (in production, use bcrypt via a proper library)
-async function hashPassword(password: string): Promise<string> {
+// Legacy hash for migration only - will be removed once all users have migrated
+async function legacyHashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(password + Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function hashPassword(password: string): Promise<string> {
+  return await bcrypt.hash(password);
+}
+
+async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
+  // Check if it's a bcrypt hash (starts with $2)
+  if (storedHash.startsWith("$2")) {
+    return await bcrypt.compare(password, storedHash);
+  }
+  // Legacy SHA-256 hash migration path
+  const legacyHash = await legacyHashPassword(password);
+  return legacyHash === storedHash;
 }
 
 function generateToken(): string {
@@ -36,15 +51,21 @@ serve(async (req) => {
 
     if (action === "signup") {
       // Validate inputs
-      if (!company_id || company_id.length < 3 || company_id.length > 50) {
+      if (!company_id || typeof company_id !== "string" || company_id.length < 3 || company_id.length > 50) {
         return new Response(
           JSON.stringify({ error: "Company ID must be between 3 and 50 characters" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (!password || password.length < 6) {
+      if (!password || typeof password !== "string" || password.length < 6 || password.length > 128) {
         return new Response(
-          JSON.stringify({ error: "Password must be at least 6 characters" }),
+          JSON.stringify({ error: "Password must be between 6 and 128 characters" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (full_name && (typeof full_name !== "string" || full_name.length > 100)) {
+        return new Response(
+          JSON.stringify({ error: "Full name must be 100 characters or less" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -63,7 +84,7 @@ serve(async (req) => {
         );
       }
 
-      // Create user
+      // Create user with bcrypt hash
       const password_hash = await hashPassword(password);
       const { data: user, error: createError } = await supabase
         .from("company_users")
@@ -72,6 +93,7 @@ serve(async (req) => {
         .single();
 
       if (createError) {
+        console.error("Failed to create user:", createError.message);
         return new Response(
           JSON.stringify({ error: "Failed to create account" }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -98,27 +120,45 @@ serve(async (req) => {
     }
 
     if (action === "signin") {
-      if (!company_id || !password) {
+      if (!company_id || typeof company_id !== "string" || !password || typeof password !== "string") {
         return new Response(
           JSON.stringify({ error: "Company ID and password are required" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      // Find user
-      const password_hash = await hashPassword(password);
-      const { data: user, error: findError } = await supabase
+      // Find user by company_id first, then verify password server-side
+      const { data: user } = await supabase
         .from("company_users")
         .select("*")
         .eq("company_id", company_id)
-        .eq("password_hash", password_hash)
         .single();
 
-      if (findError || !user) {
+      if (!user) {
+        // Perform a dummy hash to prevent timing attacks
+        await hashPassword(password);
         return new Response(
           JSON.stringify({ error: "Invalid Company ID or password" }),
           { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
+      }
+
+      const passwordValid = await verifyPassword(password, user.password_hash);
+      if (!passwordValid) {
+        return new Response(
+          JSON.stringify({ error: "Invalid Company ID or password" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Migrate legacy hash to bcrypt on successful login
+      if (!user.password_hash.startsWith("$2")) {
+        const newHash = await hashPassword(password);
+        await supabase
+          .from("company_users")
+          .update({ password_hash: newHash })
+          .eq("id", user.id);
+        console.log(`Migrated password hash for user ${user.id} to bcrypt`);
       }
 
       // Create session
@@ -141,7 +181,7 @@ serve(async (req) => {
     }
 
     if (action === "validate") {
-      if (!token) {
+      if (!token || typeof token !== "string") {
         return new Response(
           JSON.stringify({ error: "Token required" }),
           { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -162,10 +202,10 @@ serve(async (req) => {
         );
       }
 
-      const user = session.company_users;
+      const userData = session.company_users;
       return new Response(
         JSON.stringify({
-          user: { id: user.id, company_id: user.company_id, full_name: user.full_name },
+          user: { id: userData.id, company_id: userData.company_id, full_name: userData.full_name },
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -186,6 +226,7 @@ serve(async (req) => {
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
+    console.error("Auth function error:", error);
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
