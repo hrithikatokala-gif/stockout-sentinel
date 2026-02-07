@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { InventoryItem, RiskLevel } from "@/lib/inventory-data";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, Clock, Package } from "lucide-react";
+import { AlertTriangle, Clock, Package, ShoppingCart, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useCart } from "@/contexts/CartContext";
 
 const riskConfig: Record<RiskLevel, { label: string; className: string; icon: typeof AlertTriangle }> = {
   critical: { label: "Critical", className: "bg-destructive/10 text-destructive border-destructive/20", icon: AlertTriangle },
@@ -17,6 +19,7 @@ interface StockoutTableProps {
 
 export function StockoutTable({ items }: StockoutTableProps) {
   const [orderQuantities, setOrderQuantities] = useState<Record<string, number>>({});
+  const { addToCart, isInCart } = useCart();
 
   const getOrderQty = (item: InventoryItem) => {
     return orderQuantities[item.id] ?? item.suggestedOrderQty;
@@ -26,6 +29,14 @@ export function StockoutTable({ items }: StockoutTableProps) {
     const qty = parseInt(value) || 0;
     setOrderQuantities(prev => ({ ...prev, [itemId]: qty }));
   };
+
+  const handleAddToCart = (item: InventoryItem) => {
+    const qty = getOrderQty(item);
+    if (qty > 0) {
+      addToCart(item, qty);
+    }
+  };
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -39,13 +50,15 @@ export function StockoutTable({ items }: StockoutTableProps) {
             <th className="pb-3 font-semibold text-muted-foreground">Days Left</th>
             <th className="pb-3 font-semibold text-muted-foreground">Shelf Life</th>
             <th className="pb-3 font-semibold text-muted-foreground">Status</th>
-            <th className="pb-3 font-semibold text-muted-foreground">Recommended Order</th>
+            <th className="pb-3 font-semibold text-muted-foreground">Order Qty</th>
+            <th className="pb-3 font-semibold text-muted-foreground"></th>
           </tr>
         </thead>
         <tbody className="divide-y">
           {items.map((item) => {
             const config = riskConfig[item.risk];
             const RiskIcon = config.icon;
+            const inCart = isInCart(item.id);
             return (
               <tr
                 key={item.id}
@@ -103,18 +116,30 @@ export function StockoutTable({ items }: StockoutTableProps) {
                       )}
                     />
                     <span className="text-xs text-muted-foreground">{item.unit}</span>
-                    {getOrderQty(item) !== item.suggestedOrderQty && (
-                      <button
-                        onClick={() => handleQtyChange(item.id, item.suggestedOrderQty.toString())}
-                        className="text-xs text-muted-foreground hover:text-foreground underline"
-                      >
-                        Reset
-                      </button>
-                    )}
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Suggested: {item.suggestedOrderQty} {item.unit} • {item.suggestedOrderDate}
+                    Suggested: {item.suggestedOrderQty}
                   </p>
+                </td>
+                <td className="py-3.5">
+                  <Button
+                    size="sm"
+                    variant={inCart ? "secondary" : "default"}
+                    className="gap-1.5"
+                    onClick={() => handleAddToCart(item)}
+                  >
+                    {inCart ? (
+                      <>
+                        <Check className="h-3.5 w-3.5" />
+                        Added
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="h-3.5 w-3.5" />
+                        Add
+                      </>
+                    )}
+                  </Button>
                 </td>
               </tr>
             );
