@@ -4,17 +4,22 @@ import { StockoutTable } from "@/components/StockoutTable";
 import { ReorderPanel } from "@/components/ReorderPanel";
 import { UsageChart } from "@/components/UsageChart";
 import { ReorderTrend } from "@/components/ReorderTrend";
+import { ChainSelector, chains } from "@/components/ChainSelector";
 import { inventoryData, categories } from "@/lib/inventory-data";
 import { cn } from "@/lib/utils";
 
 const Index = () => {
   const [activeCategory, setActiveCategory] = useState<string>("All");
+  const [selectedChain, setSelectedChain] = useState<string>(chains[0].id);
+
+  const chainFilteredItems = inventoryData.filter(i => i.chainId === selectedChain);
 
   const filteredItems = activeCategory === "All"
-    ? inventoryData
-    : inventoryData.filter(i => i.category === activeCategory);
+    ? chainFilteredItems
+    : chainFilteredItems.filter(i => i.category === activeCategory);
 
   const sortedItems = [...filteredItems].sort((a, b) => a.daysUntilStockout - b.daysUntilStockout);
+  const currentChain = chains.find(c => c.id === selectedChain);
 
   return (
     <div className="min-h-screen bg-background">
@@ -29,9 +34,15 @@ const Index = () => {
               <p className="text-xs text-muted-foreground">Inventory Intelligence</p>
             </div>
           </div>
-          <p className="font-mono text-xs text-muted-foreground">
-            Updated just now
-          </p>
+          <div className="flex items-center gap-4">
+            <ChainSelector 
+              selectedChain={selectedChain} 
+              onChainChange={setSelectedChain} 
+            />
+            <p className="font-mono text-xs text-muted-foreground">
+              Updated just now
+            </p>
+          </div>
         </div>
       </header>
 
@@ -78,7 +89,7 @@ const Index = () => {
               </h2>
               <p className="mt-1 text-xs text-muted-foreground">Orders that should be placed today</p>
               <div className="mt-4">
-                <ReorderPanel items={inventoryData} />
+                <ReorderPanel items={chainFilteredItems} />
               </div>
             </div>
           </div>
