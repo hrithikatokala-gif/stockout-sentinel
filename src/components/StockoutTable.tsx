@@ -22,6 +22,7 @@ export function StockoutTable({ items }: StockoutTableProps) {
             <th className="pb-3 font-semibold text-muted-foreground">Item</th>
             <th className="pb-3 font-semibold text-muted-foreground">Category</th>
             <th className="pb-3 font-semibold text-muted-foreground">Stock</th>
+            <th className="pb-3 font-semibold text-muted-foreground">Price/Unit</th>
             <th className="pb-3 font-semibold text-muted-foreground">Daily Use</th>
             <th className="pb-3 font-semibold text-muted-foreground">Days Left</th>
             <th className="pb-3 font-semibold text-muted-foreground">Status</th>
@@ -44,6 +45,9 @@ export function StockoutTable({ items }: StockoutTableProps) {
                 <td className="py-3.5 text-muted-foreground">{item.category}</td>
                 <td className="py-3.5 font-mono text-sm">
                   {item.currentStock} {item.unit}
+                </td>
+                <td className="py-3.5 font-mono text-sm text-muted-foreground">
+                  ${item.pricePerUnit.toFixed(2)}
                 </td>
                 <td className="py-3.5 font-mono text-sm text-muted-foreground">
                   {item.dailyUsage} {item.unit}/d

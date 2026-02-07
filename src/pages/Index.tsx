@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { AlertTriangle, Package, ShoppingCart, TrendingDown, BarChart3 } from "lucide-react";
-import { MetricCard } from "@/components/MetricCard";
+import { ShoppingCart, BarChart3 } from "lucide-react";
 import { StockoutTable } from "@/components/StockoutTable";
 import { ReorderPanel } from "@/components/ReorderPanel";
-import { inventoryData, categories, summaryStats } from "@/lib/inventory-data";
+import { UsageChart } from "@/components/UsageChart";
+import { inventoryData, categories } from "@/lib/inventory-data";
 import { cn } from "@/lib/utils";
 
 const Index = () => {
@@ -17,7 +17,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b bg-card">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
@@ -36,37 +35,8 @@ const Index = () => {
       </header>
 
       <main className="mx-auto max-w-7xl px-6 py-6 space-y-6">
-        {/* Metrics */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricCard
-            title="Critical Items"
-            value={summaryStats.criticalItems}
-            subtitle="Need immediate attention"
-            icon={AlertTriangle}
-            variant="critical"
-          />
-          <MetricCard
-            title="Low Stock"
-            value={summaryStats.warningItems}
-            subtitle="Running below threshold"
-            icon={TrendingDown}
-            variant="warning"
-          />
-          <MetricCard
-            title="Orders Due Today"
-            value={summaryStats.ordersNeededToday}
-            subtitle="Suppliers to contact"
-            icon={ShoppingCart}
-            variant="default"
-          />
-          <MetricCard
-            title="Healthy Items"
-            value={summaryStats.healthyItems}
-            subtitle="Well stocked"
-            icon={Package}
-            variant="success"
-          />
-        </div>
+        {/* Usage Charts */}
+        <UsageChart />
 
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           {/* Main Table */}
@@ -95,7 +65,7 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Sidebar - Reorder Suggestions */}
+          {/* Sidebar */}
           <div className="space-y-4">
             <div className="rounded-lg border bg-card p-5">
               <h2 className="flex items-center gap-2 text-base font-semibold">
