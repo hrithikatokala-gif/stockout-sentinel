@@ -5,6 +5,7 @@ import { Repeat, TrendingUp, TrendingDown, Minus } from "lucide-react";
 interface ReorderTrendItem {
   name: string;
   category: string;
+  supplier: string;
   ordersPerMonth: number;
   trend: "up" | "down" | "stable";
   avgCostPerOrder: number;
@@ -19,6 +20,7 @@ const reorderTrends: ReorderTrendItem[] = inventoryData
     return {
       name: item.name,
       category: item.category,
+      supplier: item.supplier,
       ordersPerMonth,
       trend,
       avgCostPerOrder: +(item.suggestedOrderQty * item.pricePerUnit).toFixed(0),
@@ -53,7 +55,7 @@ export function ReorderTrend() {
             >
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{item.name}</p>
-                <p className="text-xs text-muted-foreground">{item.category}</p>
+                <p className="text-xs text-muted-foreground">{item.category} • {item.supplier}</p>
               </div>
               <div className="flex items-center gap-4 shrink-0">
                 <div className="text-right">
