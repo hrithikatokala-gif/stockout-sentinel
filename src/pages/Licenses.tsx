@@ -12,6 +12,7 @@ interface License {
   id: string;
   name: string;
   type: "license" | "certification";
+  heldBy: string;
   issuedBy: string;
   issueDate: string;
   expiryDate: string;
@@ -26,6 +27,7 @@ const mockLicenses: Record<string, License[]> = {
       id: "1",
       name: "Food Service License",
       type: "license",
+      heldBy: "Marco Rodriguez",
       issuedBy: "NYC Department of Health",
       issueDate: "2024-01-15",
       expiryDate: "2026-01-15",
@@ -37,6 +39,7 @@ const mockLicenses: Record<string, License[]> = {
       id: "2",
       name: "Liquor License",
       type: "license",
+      heldBy: "Sarah Chen",
       issuedBy: "State Liquor Authority",
       issueDate: "2023-06-01",
       expiryDate: "2025-06-01",
@@ -48,6 +51,7 @@ const mockLicenses: Record<string, License[]> = {
       id: "3",
       name: "Food Safety Certification",
       type: "certification",
+      heldBy: "James Thompson",
       issuedBy: "ServSafe",
       issueDate: "2024-03-10",
       expiryDate: "2026-03-10",
@@ -59,6 +63,7 @@ const mockLicenses: Record<string, License[]> = {
       id: "4",
       name: "Fire Safety Certificate",
       type: "certification",
+      heldBy: "Marco Rodriguez",
       issuedBy: "FDNY",
       issueDate: "2023-09-20",
       expiryDate: "2025-09-20",
@@ -70,6 +75,7 @@ const mockLicenses: Record<string, License[]> = {
       id: "5",
       name: "Health Inspection Certificate",
       type: "certification",
+      heldBy: "Emily Davis",
       issuedBy: "NYC Health Department",
       issueDate: "2025-11-01",
       expiryDate: "2026-05-01",
@@ -83,6 +89,7 @@ const mockLicenses: Record<string, License[]> = {
       id: "6",
       name: "Food Service License",
       type: "license",
+      heldBy: "David Park",
       issuedBy: "LA County Health Dept",
       issueDate: "2024-02-20",
       expiryDate: "2026-02-20",
@@ -94,6 +101,7 @@ const mockLicenses: Record<string, License[]> = {
       id: "7",
       name: "Business Operating Permit",
       type: "license",
+      heldBy: "Michelle Wong",
       issuedBy: "City of Los Angeles",
       issueDate: "2023-04-15",
       expiryDate: "2025-04-15",
@@ -105,6 +113,7 @@ const mockLicenses: Record<string, License[]> = {
       id: "8",
       name: "Food Handler Certification",
       type: "certification",
+      heldBy: "Carlos Mendez",
       issuedBy: "California Food Handler",
       issueDate: "2024-06-01",
       expiryDate: "2027-06-01",
@@ -118,6 +127,7 @@ const mockLicenses: Record<string, License[]> = {
       id: "9",
       name: "Food Establishment License",
       type: "license",
+      heldBy: "Robert Johnson",
       issuedBy: "Chicago CDPH",
       issueDate: "2024-01-01",
       expiryDate: "2026-01-01",
@@ -129,6 +139,7 @@ const mockLicenses: Record<string, License[]> = {
       id: "10",
       name: "Allergen Awareness Certification",
       type: "certification",
+      heldBy: "Lisa Martinez",
       issuedBy: "AllerTrain",
       issueDate: "2024-08-15",
       expiryDate: "2026-08-15",
@@ -140,6 +151,7 @@ const mockLicenses: Record<string, License[]> = {
       id: "11",
       name: "Outdoor Dining Permit",
       type: "license",
+      heldBy: "Robert Johnson",
       issuedBy: "City of Chicago",
       issueDate: "2023-05-01",
       expiryDate: "2025-05-01",
@@ -273,6 +285,7 @@ const Licenses = () => {
                 <TableRow>
                   <TableHead>Document Name</TableHead>
                   <TableHead>Type</TableHead>
+                  <TableHead>Held By</TableHead>
                   <TableHead>Issued By</TableHead>
                   <TableHead>Issue Date</TableHead>
                   <TableHead>Expiry Date</TableHead>
@@ -289,6 +302,7 @@ const Licenses = () => {
                         {license.type}
                       </Badge>
                     </TableCell>
+                    <TableCell className="font-medium">{license.heldBy}</TableCell>
                     <TableCell>{license.issuedBy}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1 text-muted-foreground">
