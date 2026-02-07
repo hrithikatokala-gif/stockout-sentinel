@@ -23,7 +23,7 @@ export const AppHeader = ({ children }: AppHeaderProps) => {
               <BarChart3 className="h-5 w-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight">StockPulse</h1>
+              <h1 className="text-lg font-bold tracking-tight">restoq</h1>
               <p className="text-xs text-muted-foreground">Inventory Intelligence</p>
             </div>
           </div>
