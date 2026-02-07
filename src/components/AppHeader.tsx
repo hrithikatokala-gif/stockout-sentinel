@@ -9,6 +9,7 @@ interface AppHeaderProps {
 const navItems = [
   { to: "/", label: "Dashboard" },
   { to: "/suppliers", label: "Suppliers" },
+  { to: "/emails", label: "Emails" },
 ];
 
 export const AppHeader = ({ children }: AppHeaderProps) => {
