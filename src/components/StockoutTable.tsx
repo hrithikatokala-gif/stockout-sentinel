@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { InventoryItem, RiskLevel } from "@/lib/inventory-data";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, Clock, ArrowRight, Package } from "lucide-react";
+import { AlertTriangle, Clock, Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 
 const riskConfig: Record<RiskLevel, { label: string; className: string; icon: typeof AlertTriangle }> = {
   critical: { label: "Critical", className: "bg-destructive/10 text-destructive border-destructive/20", icon: AlertTriangle },
@@ -14,6 +16,16 @@ interface StockoutTableProps {
 }
 
 export function StockoutTable({ items }: StockoutTableProps) {
+  const [orderQuantities, setOrderQuantities] = useState<Record<string, number>>({});
+
+  const getOrderQty = (item: InventoryItem) => {
+    return orderQuantities[item.id] ?? item.suggestedOrderQty;
+  };
+
+  const handleQtyChange = (itemId: string, value: string) => {
+    const qty = parseInt(value) || 0;
+    setOrderQuantities(prev => ({ ...prev, [itemId]: qty }));
+  };
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -27,7 +39,7 @@ export function StockoutTable({ items }: StockoutTableProps) {
             <th className="pb-3 font-semibold text-muted-foreground">Days Left</th>
             <th className="pb-3 font-semibold text-muted-foreground">Shelf Life</th>
             <th className="pb-3 font-semibold text-muted-foreground">Status</th>
-            <th className="pb-3 font-semibold text-muted-foreground">Reorder</th>
+            <th className="pb-3 font-semibold text-muted-foreground">Recommended Order</th>
           </tr>
         </thead>
         <tbody className="divide-y">
@@ -80,18 +92,29 @@ export function StockoutTable({ items }: StockoutTableProps) {
                 </td>
                 <td className="py-3.5">
                   <div className="flex items-center gap-2">
-                    <span className={cn(
-                      "text-xs font-medium",
-                      item.suggestedOrderDate === "Today" && "text-destructive font-bold",
-                      item.suggestedOrderDate === "Tomorrow" && "text-accent-foreground font-semibold"
-                    )}>
-                      {item.suggestedOrderDate}
-                    </span>
-                    <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                    <span className="font-mono text-xs text-muted-foreground">
-                      {item.suggestedOrderQty} {item.unit}
-                    </span>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={getOrderQty(item)}
+                      onChange={(e) => handleQtyChange(item.id, e.target.value)}
+                      className={cn(
+                        "h-8 w-20 text-center font-mono text-sm",
+                        getOrderQty(item) !== item.suggestedOrderQty && "border-primary ring-1 ring-primary/20"
+                      )}
+                    />
+                    <span className="text-xs text-muted-foreground">{item.unit}</span>
+                    {getOrderQty(item) !== item.suggestedOrderQty && (
+                      <button
+                        onClick={() => handleQtyChange(item.id, item.suggestedOrderQty.toString())}
+                        className="text-xs text-muted-foreground hover:text-foreground underline"
+                      >
+                        Reset
+                      </button>
+                    )}
                   </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Suggested: {item.suggestedOrderQty} {item.unit} • {item.suggestedOrderDate}
+                  </p>
                 </td>
               </tr>
             );
