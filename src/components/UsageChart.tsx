@@ -143,11 +143,7 @@ export function UsageChart({ chainId }: UsageChartProps) {
                   <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} label={{ value: "Cost", angle: 90, position: "insideRight", style: { fontSize: 11, fill: "hsl(var(--muted-foreground))" } }} />
                   <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted) / 0.3)" }} />
                   <Legend wrapperStyle={{ fontSize: "12px" }} />
-                  <Bar yAxisId="left" dataKey="usage" name="Usage (units)" radius={[4, 4, 0, 0]}>
-                    {data.map((entry) => (
-                      <Cell key={entry.category} fill={CATEGORY_COLORS[entry.category]} />
-                    ))}
-                  </Bar>
+                  <Bar yAxisId="left" dataKey="usage" name="Usage (units)" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                   <Bar yAxisId="right" dataKey="cost" name="Cost ($)" fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} fillOpacity={0.7} />
                 </BarChart>
               </ResponsiveContainer>
