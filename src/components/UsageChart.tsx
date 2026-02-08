@@ -3,6 +3,8 @@ import {
 } from "recharts";
 import { useState, useMemo } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DemandTrendsContent } from "@/components/DemandTrends";
 import { inventoryData } from "@/lib/inventory-data";
 
 const CATEGORIES = ["Protein", "Produce", "Dairy", "Pantry", "Pasta"] as const;
@@ -114,6 +116,19 @@ export function UsageChart({ chainId }: UsageChartProps) {
             {isHistorical && <span className="ml-1 text-amber-500">(prior year)</span>}
           </p>
         </div>
+        <Dialog>
+          <DialogTrigger asChild>
+            <button className="text-xs text-primary hover:underline font-medium">
+              View Demand Trends →
+            </button>
+          </DialogTrigger>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Sales & Demand Trends</DialogTitle>
+            </DialogHeader>
+            <DemandTrendsContent chainId={chainId} />
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Tabs value={activeMonth} onValueChange={setActiveMonth}>

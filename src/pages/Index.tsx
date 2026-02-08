@@ -4,7 +4,7 @@ import { StockoutTable } from "@/components/StockoutTable";
 import { ReorderPanel } from "@/components/ReorderPanel";
 import { UsageChart } from "@/components/UsageChart";
 import { ReorderTrend } from "@/components/ReorderTrend";
-import { DemandTrends } from "@/components/DemandTrends";
+
 import { ChainBadge, ChainSwitchPanel, chains } from "@/components/ChainSelector";
 import { AppHeader } from "@/components/AppHeader";
 import { inventoryData, categories, RiskLevel } from "@/lib/inventory-data";
@@ -84,8 +84,6 @@ const Index = () => {
               <ReorderTrend chainId={selectedChain} />
             </div>
 
-            {/* Sales & Demand Trends */}
-            <DemandTrends chainId={selectedChain} />
 
             <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
               {/* Main Table */}
