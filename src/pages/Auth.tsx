@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { BarChart3, Eye, EyeOff } from "lucide-react";
+import { BarChart3, Eye, EyeOff, ArrowLeft, Check } from "lucide-react";
 import { z } from "zod";
 
 const companyIdSchema = z.string()
@@ -15,15 +15,26 @@ const companyIdSchema = z.string()
   .max(50, "Company ID must be less than 50 characters")
   .regex(/^[a-zA-Z0-9_-]+$/, "Company ID can only contain letters, numbers, dashes, and underscores");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
+const managerIdSchema = z.string().min(1, "Manager ID is required").max(100, "Manager ID must be less than 100 characters");
 
 export default function Auth() {
-  const [companyId, setCompanyId] = useState("");
-  const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  // Sign in state
+  const [signInCompanyId, setSignInCompanyId] = useState("");
+  const [signInPassword, setSignInPassword] = useState("");
+  const [showSignInPassword, setShowSignInPassword] = useState(false);
+  const [signInErrors, setSignInErrors] = useState<{ companyId?: string; password?: string }>({});
+
+  // Sign up state
+  const [signUpStep, setSignUpStep] = useState<1 | 2>(1);
+  const [signUpCompanyId, setSignUpCompanyId] = useState("");
+  const [managerId, setManagerId] = useState("");
+  const [signUpPassword, setSignUpPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [signUpErrors, setSignUpErrors] = useState<{ companyId?: string; managerId?: string; password?: string; confirmPassword?: string }>({});
+
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<{ companyId?: string; password?: string }>({});
-  
   const { user, signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -34,71 +45,74 @@ export default function Auth() {
     }
   }, [user, navigate]);
 
-  const validateInputs = () => {
-    const newErrors: { companyId?: string; password?: string } = {};
-    
-    const companyIdResult = companyIdSchema.safeParse(companyId);
-    if (!companyIdResult.success) {
-      newErrors.companyId = companyIdResult.error.errors[0].message;
-    }
-    
-    const passwordResult = passwordSchema.safeParse(password);
-    if (!passwordResult.success) {
-      newErrors.password = passwordResult.error.errors[0].message;
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateInputs()) return;
-    
-    setLoading(true);
-    
-    const { error } = await signIn(companyId, password);
+    const newErrors: { companyId?: string; password?: string } = {};
 
+    const cResult = companyIdSchema.safeParse(signInCompanyId);
+    if (!cResult.success) newErrors.companyId = cResult.error.errors[0].message;
+
+    const pResult = passwordSchema.safeParse(signInPassword);
+    if (!pResult.success) newErrors.password = pResult.error.errors[0].message;
+
+    setSignInErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+
+    setLoading(true);
+    const { error } = await signIn(signInCompanyId, signInPassword);
     if (error) {
-      toast({
-        variant: "destructive",
-        title: "Sign in failed",
-        description: error,
-      });
+      toast({ variant: "destructive", title: "Sign in failed", description: error });
     } else {
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully signed in.",
-      });
+      toast({ title: "Welcome back!", description: "You have successfully signed in." });
     }
-    
     setLoading(false);
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleSignUpStep1 = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateInputs()) return;
-    
-    setLoading(true);
-    
-    const { error } = await signUp(companyId, password, fullName || undefined);
+    const newErrors: { companyId?: string; managerId?: string } = {};
 
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Sign up failed",
-        description: error,
-      });
-    } else {
-      toast({
-        title: "Account created!",
-        description: "Welcome to restoq.",
-      });
+    const cResult = companyIdSchema.safeParse(signUpCompanyId);
+    if (!cResult.success) newErrors.companyId = cResult.error.errors[0].message;
+
+    const mResult = managerIdSchema.safeParse(managerId);
+    if (!mResult.success) newErrors.managerId = mResult.error.errors[0].message;
+
+    setSignUpErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+
+    setSignUpStep(2);
+  };
+
+  const handleSignUpStep2 = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const newErrors: { password?: string; confirmPassword?: string } = {};
+
+    const pResult = passwordSchema.safeParse(signUpPassword);
+    if (!pResult.success) newErrors.password = pResult.error.errors[0].message;
+
+    if (signUpPassword !== confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
     }
-    
+
+    setSignUpErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+
+    setLoading(true);
+    const { error } = await signUp(signUpCompanyId, signUpPassword, managerId);
+    if (error) {
+      toast({ variant: "destructive", title: "Sign up failed", description: error });
+    } else {
+      toast({ title: "Account created!", description: "Welcome to restoq." });
+    }
     setLoading(false);
+  };
+
+  const resetSignUp = () => {
+    setSignUpStep(1);
+    setSignUpPassword("");
+    setConfirmPassword("");
+    setSignUpErrors({});
   };
 
   return (
@@ -120,12 +134,13 @@ export default function Auth() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
+          <Tabs defaultValue="signin" className="w-full" onValueChange={() => resetSignUp()}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
-            
+
+            {/* ── Sign In ── */}
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
@@ -134,12 +149,12 @@ export default function Auth() {
                     id="signin-company-id"
                     type="text"
                     placeholder="your-company-id"
-                    value={companyId}
-                    onChange={(e) => setCompanyId(e.target.value)}
+                    value={signInCompanyId}
+                    onChange={(e) => setSignInCompanyId(e.target.value)}
                     required
                   />
-                  {errors.companyId && (
-                    <p className="text-sm text-destructive">{errors.companyId}</p>
+                  {signInErrors.companyId && (
+                    <p className="text-sm text-destructive">{signInErrors.companyId}</p>
                   )}
                 </div>
                 <div className="space-y-2">
@@ -147,10 +162,10 @@ export default function Auth() {
                   <div className="relative">
                     <Input
                       id="signin-password"
-                      type={showPassword ? "text" : "password"}
+                      type={showSignInPassword ? "text" : "password"}
                       placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      value={signInPassword}
+                      onChange={(e) => setSignInPassword(e.target.value)}
                       required
                     />
                     <Button
@@ -158,17 +173,17 @@ export default function Auth() {
                       variant="ghost"
                       size="icon"
                       className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
+                      onClick={() => setShowSignInPassword(!showSignInPassword)}
                     >
-                      {showPassword ? (
+                      {showSignInPassword ? (
                         <EyeOff className="h-4 w-4 text-muted-foreground" />
                       ) : (
                         <Eye className="h-4 w-4 text-muted-foreground" />
                       )}
                     </Button>
                   </div>
-                  {errors.password && (
-                    <p className="text-sm text-destructive">{errors.password}</p>
+                  {signInErrors.password && (
+                    <p className="text-sm text-destructive">{signInErrors.password}</p>
                   )}
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
@@ -176,69 +191,133 @@ export default function Auth() {
                 </Button>
               </form>
             </TabsContent>
-            
+
+            {/* ── Sign Up ── */}
             <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-name">Full Name</Label>
-                  <Input
-                    id="signup-name"
-                    type="text"
-                    placeholder="John Doe"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-company-id">Company ID</Label>
-                  <Input
-                    id="signup-company-id"
-                    type="text"
-                    placeholder="your-company-id"
-                    value={companyId}
-                    onChange={(e) => setCompanyId(e.target.value)}
-                    required
-                  />
-                  {errors.companyId && (
-                    <p className="text-sm text-destructive">{errors.companyId}</p>
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    Letters, numbers, dashes, and underscores only
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <div className="relative">
+              {signUpStep === 1 ? (
+                <form onSubmit={handleSignUpStep1} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-company-id">Company ID</Label>
                     <Input
-                      id="signup-password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      id="signup-company-id"
+                      type="text"
+                      placeholder="your-company-id"
+                      value={signUpCompanyId}
+                      onChange={(e) => setSignUpCompanyId(e.target.value)}
                       required
                     />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </Button>
+                    {signUpErrors.companyId && (
+                      <p className="text-sm text-destructive">{signUpErrors.companyId}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Letters, numbers, dashes, and underscores only
+                    </p>
                   </div>
-                  {errors.password && (
-                    <p className="text-sm text-destructive">{errors.password}</p>
-                  )}
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Creating account..." : "Create Account"}
-                </Button>
-              </form>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-manager-id">Manager ID</Label>
+                    <Input
+                      id="signup-manager-id"
+                      type="text"
+                      placeholder="Manager name or ID"
+                      value={managerId}
+                      onChange={(e) => setManagerId(e.target.value)}
+                      required
+                    />
+                    {signUpErrors.managerId && (
+                      <p className="text-sm text-destructive">{signUpErrors.managerId}</p>
+                    )}
+                  </div>
+                  <Button type="submit" className="w-full">
+                    Continue
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={handleSignUpStep2} className="space-y-4">
+                  <button
+                    type="button"
+                    onClick={resetSignUp}
+                    className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                    Back
+                  </button>
+
+                  <div className="rounded-md border border-border bg-muted/50 p-3 space-y-1">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Check className="h-3.5 w-3.5 text-primary" />
+                      <span className="text-muted-foreground">Company ID:</span>
+                      <span className="font-medium">{signUpCompanyId}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Check className="h-3.5 w-3.5 text-primary" />
+                      <span className="text-muted-foreground">Manager ID:</span>
+                      <span className="font-medium">{managerId}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">Create Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="signup-password"
+                        type={showSignUpPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={signUpPassword}
+                        onChange={(e) => setSignUpPassword(e.target.value)}
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        onClick={() => setShowSignUpPassword(!showSignUpPassword)}
+                      >
+                        {showSignUpPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
+                    {signUpErrors.password && (
+                      <p className="text-sm text-destructive">{signUpErrors.password}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="signup-confirm-password"
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
+                    {signUpErrors.confirmPassword && (
+                      <p className="text-sm text-destructive">{signUpErrors.confirmPassword}</p>
+                    )}
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Creating account..." : "Create Account"}
+                  </Button>
+                </form>
+              )}
             </TabsContent>
           </Tabs>
         </CardContent>
