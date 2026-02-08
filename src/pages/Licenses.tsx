@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
-import { ChainSelector } from "@/components/ChainSelector";
+import { ChainBadge, chains } from "@/components/ChainSelector";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -220,7 +220,7 @@ const Licenses = () => {
   return (
     <div className="min-h-screen bg-background">
       <AppHeader>
-        <ChainSelector selectedChain={selectedChain} onChainChange={setSelectedChain} />
+        <ChainBadge chainId={selectedChain} />
       </AppHeader>
 
       <main className="mx-auto max-w-7xl px-6 py-8">
