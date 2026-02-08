@@ -21,10 +21,14 @@ Through our website, operators are able to view their historical data on the das
 This project is built with:
 
 - Lovable.dev
+- TypeScript
+- CSS
+- HTML
 
 ## Problems that your team ran into and how your team overcame them
 
-One obstacle we ran into was finding a way to design a system to scale for large restaurant chains rather than a single location. We needed a way to structure our data models in a way where it wouldn't be too overwhelming. We solved this by organizing the system so managers can see overall one chain inventory first and look at individual locations only when needed by inputing specific chain IDs. This way, the platform stays easy to use and doesn’t overwhelm users, even for large restaurant chains.
+One obstacle we ran into was finding a way to design a system to scale for large restaurant chains rather than a single location. We needed a way to structure our data models in a way where it wouldn't be too overwhelming. We solved this by organizing the system so managers can see overall one chain inventory first and look at individual locations only when needed by inputing specific chain IDs. This way, the platform stays easy to use and doesn’t overwhelm users, even for large restaurant chains. Another challenge was building onto what was given to us. Since we used lovable.dev to make a foundation for our website, it was kind of hard to code new components and not mess up the API code. We managed to learn the basics of TypeScript and program the website how we wanted it. 
+
 
 ## Credit
 
