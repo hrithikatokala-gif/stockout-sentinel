@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      auth_rate_limits: {
+        Row: {
+          attempt_count: number | null
+          attempt_type: string
+          id: string
+          identifier: string
+          window_start: string | null
+        }
+        Insert: {
+          attempt_count?: number | null
+          attempt_type: string
+          id?: string
+          identifier: string
+          window_start?: string | null
+        }
+        Update: {
+          attempt_count?: number | null
+          attempt_type?: string
+          id?: string
+          identifier?: string
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       company_users: {
         Row: {
           company_id: string

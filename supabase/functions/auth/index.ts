@@ -7,6 +7,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const RATE_LIMITS = {
+  signin: { maxAttempts: 10, windowMinutes: 15 },
+  signup: { maxAttempts: 5, windowMinutes: 60 },
+};
+
 // Legacy hash for migration only - will be removed once all users have migrated
 async function legacyHashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -22,11 +27,9 @@ function hashPassword(password: string): string {
 }
 
 function verifyPassword(password: string, storedHash: string): boolean {
-  // Check if it's a bcrypt hash (starts with $2)
   if (storedHash.startsWith("$2")) {
     return compareSync(password, storedHash);
   }
-  // Legacy SHA-256 hash migration path — fall through to async check
   return false;
 }
 
@@ -44,6 +47,60 @@ function generateToken(): string {
   return Array.from(array, b => b.toString(16).padStart(2, "0")).join("");
 }
 
+async function checkRateLimit(
+  supabase: ReturnType<typeof createClient>,
+  identifier: string,
+  attemptType: string
+): Promise<boolean> {
+  const limits = RATE_LIMITS[attemptType as keyof typeof RATE_LIMITS];
+  if (!limits) return true;
+
+  const windowStart = new Date(Date.now() - limits.windowMinutes * 60 * 1000).toISOString();
+
+  // Get existing record
+  const { data: existing } = await supabase
+    .from("auth_rate_limits")
+    .select("*")
+    .eq("identifier", identifier)
+    .eq("attempt_type", attemptType)
+    .single();
+
+  if (!existing) {
+    // No record yet, create one
+    await supabase.from("auth_rate_limits").upsert({
+      identifier,
+      attempt_type: attemptType,
+      attempt_count: 1,
+      window_start: new Date().toISOString(),
+    }, { onConflict: "identifier,attempt_type" });
+    return true;
+  }
+
+  // Check if window has expired, reset if so
+  if (existing.window_start < windowStart) {
+    await supabase
+      .from("auth_rate_limits")
+      .update({ attempt_count: 1, window_start: new Date().toISOString() })
+      .eq("identifier", identifier)
+      .eq("attempt_type", attemptType);
+    return true;
+  }
+
+  // Check if over limit
+  if (existing.attempt_count >= limits.maxAttempts) {
+    return false;
+  }
+
+  // Increment counter
+  await supabase
+    .from("auth_rate_limits")
+    .update({ attempt_count: existing.attempt_count + 1 })
+    .eq("identifier", identifier)
+    .eq("attempt_type", attemptType);
+
+  return true;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -57,8 +114,21 @@ serve(async (req) => {
 
     const { action, company_id, password, full_name, token } = await req.json();
 
+    // Rate limit signin and signup actions
+    if (action === "signin" || action === "signup") {
+      const identifier = company_id || "unknown";
+      const allowed = await checkRateLimit(supabase, identifier, action);
+      if (!allowed) {
+        const retryMinutes = RATE_LIMITS[action as keyof typeof RATE_LIMITS]?.windowMinutes || 15;
+        console.warn(`Rate limit exceeded for ${action} by ${identifier}`);
+        return new Response(
+          JSON.stringify({ error: `Too many attempts. Please try again in ${retryMinutes} minutes.` }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     if (action === "signup") {
-      // Validate inputs
       if (!company_id || typeof company_id !== "string" || company_id.length < 3 || company_id.length > 50) {
         return new Response(
           JSON.stringify({ error: "Company ID must be between 3 and 50 characters" }),
@@ -78,7 +148,6 @@ serve(async (req) => {
         );
       }
 
-      // Check if company_id exists
       const { data: existing } = await supabase
         .from("company_users")
         .select("id")
@@ -92,7 +161,6 @@ serve(async (req) => {
         );
       }
 
-      // Create user with bcrypt hash
       const password_hash = hashPassword(password);
       const { data: user, error: createError } = await supabase
         .from("company_users")
@@ -108,9 +176,8 @@ serve(async (req) => {
         );
       }
 
-      // Create session
       const sessionToken = generateToken();
-      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
       await supabase.from("user_sessions").insert({
         user_id: user.id,
@@ -135,7 +202,6 @@ serve(async (req) => {
         );
       }
 
-      // Find user by company_id first, then verify password server-side
       const { data: user } = await supabase
         .from("company_users")
         .select("*")
@@ -143,7 +209,6 @@ serve(async (req) => {
         .single();
 
       if (!user) {
-        // Perform a dummy hash to prevent timing attacks
         hashPassword(password);
         return new Response(
           JSON.stringify({ error: "Invalid Company ID or password" }),
@@ -159,7 +224,6 @@ serve(async (req) => {
         );
       }
 
-      // Migrate legacy hash to bcrypt on successful login
       if (!user.password_hash.startsWith("$2")) {
         const newHash = hashPassword(password);
         await supabase
@@ -169,7 +233,6 @@ serve(async (req) => {
         console.log(`Migrated password hash for user ${user.id} to bcrypt`);
       }
 
-      // Create session
       const sessionToken = generateToken();
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
