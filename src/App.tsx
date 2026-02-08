@@ -12,6 +12,8 @@ import Emails from "./pages/Emails";
 import Messages from "./pages/Messages";
 import Licenses from "./pages/Licenses";
 import Auth from "./pages/Auth";
+import Settings from "./pages/Settings";
+import Help from "./pages/Help";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +33,8 @@ const App = () => (
               <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
               <Route path="/emails" element={<ProtectedRoute><Emails /></ProtectedRoute>} />
               <Route path="/licenses" element={<ProtectedRoute><Licenses /></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+              <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

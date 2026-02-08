@@ -1,4 +1,4 @@
-import { BarChart3, LogOut } from "lucide-react";
+import { BarChart3, LogOut, Settings, HelpCircle } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,6 +15,8 @@ const navItems = [
   { to: "/messages", label: "Messages" },
   { to: "/emails", label: "Emails" },
   { to: "/licenses", label: "Licenses" },
+  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/help", label: "Help", icon: HelpCircle },
 ];
 
 export const AppHeader = ({ children }: AppHeaderProps) => {
