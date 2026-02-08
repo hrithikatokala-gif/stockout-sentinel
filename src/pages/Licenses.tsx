@@ -29,8 +29,8 @@ const mockLicenses: Record<string, License[]> = {
       type: "license",
       heldBy: "Marco Rodriguez",
       issuedBy: "NYC Department of Health",
-      issueDate: "2024-01-15",
-      expiryDate: "2026-01-15",
+      issueDate: "2026-01-15",
+      expiryDate: "2027-01-15",
       status: "valid",
       fileUrl: "#",
       fileName: "food_service_license_2024.pdf",
@@ -42,7 +42,7 @@ const mockLicenses: Record<string, License[]> = {
       heldBy: "Sarah Chen",
       issuedBy: "State Liquor Authority",
       issueDate: "2023-06-01",
-      expiryDate: "2025-06-01",
+      expiryDate: "2027-06-01",
       status: "valid",
       fileUrl: "#",
       fileName: "liquor_license_2023.pdf",
@@ -54,7 +54,7 @@ const mockLicenses: Record<string, License[]> = {
       heldBy: "James Thompson",
       issuedBy: "ServSafe",
       issueDate: "2024-03-10",
-      expiryDate: "2026-03-10",
+      expiryDate: "2027-03-10",
       status: "valid",
       fileUrl: "#",
       fileName: "servsafe_cert.pdf",
@@ -66,7 +66,7 @@ const mockLicenses: Record<string, License[]> = {
       heldBy: "Marco Rodriguez",
       issuedBy: "FDNY",
       issueDate: "2023-09-20",
-      expiryDate: "2025-09-20",
+      expiryDate: "2027-09-20",
       status: "valid",
       fileUrl: "#",
       fileName: "fire_safety_cert.pdf",
@@ -167,11 +167,11 @@ const Licenses = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   const licenses = mockLicenses[selectedChain] || [];
-  
+
   const filteredLicenses = licenses.filter(
     (license) =>
       license.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      license.issuedBy.toLowerCase().includes(searchQuery.toLowerCase())
+      license.issuedBy.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const handleDownload = (license: License) => {
@@ -226,9 +226,7 @@ const Licenses = () => {
       <main className="mx-auto max-w-7xl px-6 py-8">
         <div className="mb-8">
           <h2 className="text-2xl font-bold tracking-tight">Licenses & Certifications</h2>
-          <p className="text-muted-foreground">
-            Manage and download all restaurant licenses and certifications
-          </p>
+          <p className="text-muted-foreground">Manage and download all restaurant licenses and certifications</p>
         </div>
 
         {/* Summary Cards */}
@@ -318,12 +316,7 @@ const Licenses = () => {
                     </TableCell>
                     <TableCell>{getStatusBadge(license.status)}</TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownload(license)}
-                        className="gap-1"
-                      >
+                      <Button variant="outline" size="sm" onClick={() => handleDownload(license)} className="gap-1">
                         <Download className="h-3 w-3" />
                         Download
                       </Button>
