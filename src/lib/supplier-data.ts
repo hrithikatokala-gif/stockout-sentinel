@@ -6,6 +6,14 @@ export interface Supplier {
   phone: string;
   address: string;
   categories: string[];
+  leadTimeDays: number;
+  leadTimeBreakdown: {
+    orderProcessing: number;
+    production: number;
+    packaging: number;
+    shipping: number;
+  };
+  reliability: number; // percentage of on-time deliveries
 }
 
 export const suppliers: Supplier[] = [
@@ -17,6 +25,9 @@ export const suppliers: Supplier[] = [
     phone: "(555) 234-5678",
     address: "1250 Industrial Blvd, Chicago, IL 60607",
     categories: ["Protein"],
+    leadTimeDays: 2,
+    leadTimeBreakdown: { orderProcessing: 0.25, production: 0.5, packaging: 0.25, shipping: 1 },
+    reliability: 94,
   },
   {
     id: "sup-002",
@@ -26,6 +37,9 @@ export const suppliers: Supplier[] = [
     phone: "(555) 345-6789",
     address: "800 Harbor Drive, Boston, MA 02210",
     categories: ["Protein"],
+    leadTimeDays: 1,
+    leadTimeBreakdown: { orderProcessing: 0.15, production: 0.25, packaging: 0.1, shipping: 0.5 },
+    reliability: 91,
   },
   {
     id: "sup-003",
@@ -35,6 +49,9 @@ export const suppliers: Supplier[] = [
     phone: "(555) 456-7890",
     address: "45 Pasta Lane, Brooklyn, NY 11201",
     categories: ["Pasta", "Pantry"],
+    leadTimeDays: 3,
+    leadTimeBreakdown: { orderProcessing: 0.5, production: 0.5, packaging: 0.5, shipping: 1.5 },
+    reliability: 97,
   },
   {
     id: "sup-004",
@@ -44,6 +61,9 @@ export const suppliers: Supplier[] = [
     phone: "(555) 567-8901",
     address: "320 Dairy Road, Madison, WI 53703",
     categories: ["Dairy"],
+    leadTimeDays: 3,
+    leadTimeBreakdown: { orderProcessing: 0.25, production: 1, packaging: 0.25, shipping: 1.5 },
+    reliability: 92,
   },
   {
     id: "sup-005",
@@ -53,6 +73,9 @@ export const suppliers: Supplier[] = [
     phone: "(555) 678-9012",
     address: "150 Farm Way, Columbus, OH 43215",
     categories: ["Dairy"],
+    leadTimeDays: 1,
+    leadTimeBreakdown: { orderProcessing: 0.15, production: 0.25, packaging: 0.1, shipping: 0.5 },
+    reliability: 96,
   },
   {
     id: "sup-006",
@@ -62,6 +85,9 @@ export const suppliers: Supplier[] = [
     phone: "(555) 789-0123",
     address: "2400 Agricultural Pkwy, Fresno, CA 93721",
     categories: ["Produce"],
+    leadTimeDays: 1,
+    leadTimeBreakdown: { orderProcessing: 0.1, production: 0.2, packaging: 0.2, shipping: 0.5 },
+    reliability: 89,
   },
   {
     id: "sup-007",
@@ -71,6 +97,9 @@ export const suppliers: Supplier[] = [
     phone: "(555) 890-1234",
     address: "78 Greenhouse Lane, Portland, OR 97201",
     categories: ["Produce"],
+    leadTimeDays: 1,
+    leadTimeBreakdown: { orderProcessing: 0.1, production: 0.3, packaging: 0.1, shipping: 0.5 },
+    reliability: 88,
   },
   {
     id: "sup-008",
@@ -80,6 +109,9 @@ export const suppliers: Supplier[] = [
     phone: "(555) 901-2345",
     address: "550 Import Plaza, Los Angeles, CA 90015",
     categories: ["Pantry"],
+    leadTimeDays: 3,
+    leadTimeBreakdown: { orderProcessing: 0.5, production: 0, packaging: 0.5, shipping: 2 },
+    reliability: 93,
   },
   {
     id: "sup-009",
@@ -89,6 +121,9 @@ export const suppliers: Supplier[] = [
     phone: "(555) 012-3456",
     address: "890 Little Italy St, New York, NY 10013",
     categories: ["Pantry"],
+    leadTimeDays: 2,
+    leadTimeBreakdown: { orderProcessing: 0.25, production: 0, packaging: 0.25, shipping: 1.5 },
+    reliability: 95,
   },
   {
     id: "sup-010",
@@ -98,6 +133,9 @@ export const suppliers: Supplier[] = [
     phone: "(555) 123-4567",
     address: "1200 Vineyard Ave, Napa, CA 94559",
     categories: ["Pantry"],
+    leadTimeDays: 4,
+    leadTimeBreakdown: { orderProcessing: 0.5, production: 0, packaging: 0.5, shipping: 3 },
+    reliability: 90,
   },
   {
     id: "sup-011",
@@ -107,5 +145,8 @@ export const suppliers: Supplier[] = [
     phone: "(555) 234-5679",
     address: "340 Artisan Way, San Francisco, CA 94102",
     categories: ["Pasta"],
+    leadTimeDays: 2,
+    leadTimeBreakdown: { orderProcessing: 0.25, production: 0.75, packaging: 0.25, shipping: 0.75 },
+    reliability: 93,
   },
 ];
